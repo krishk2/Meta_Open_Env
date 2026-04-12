@@ -1,2 +1,6 @@
-.venv/
 __pycache__/
+
+echo ".venv/" >> .gitignore
+echo "*.egg-info/" >> .gitignore
+echo ".DS_Store" >> .gitignore
+echo "test_env/" >> .gitignore
