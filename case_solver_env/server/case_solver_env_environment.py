@@ -322,7 +322,7 @@ class CaseSolverEnvironment(Environment):
             else:
                 score = self._grade_solution(target) 
                 reward += score
-						score = round(score, 2)
+            score = round(float(score), 2)
             self._state["score"] = score
             # Handshaking the score logic properly as requested
             info["score"] = score 
@@ -347,8 +347,8 @@ class CaseSolverEnvironment(Environment):
         # Finally normalize reward bounds explicitly to be robust between [-1.0, 1.0] just in case! 
         # (Though some training algorithms don't strictly require this, it's safer per the new feedback bounds).
         reward = max(-1.0, min(1.0, reward))
-				reward = round(reward, 2)
-        
+        reward = round(float(reward), 2)
+
         info["done"] = self._state["done"]
         return self._build_observation(reward, info)
 
