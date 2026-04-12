@@ -188,11 +188,11 @@ class CaseSolverEnvironment(Environment):
         time_bonus = max(0, self._state["time_remaining"] / 24.0) * 0.1
 
         if target == self._state["solution"]:
-            # Correct culprit -> returns a positive score between [0.7, 1.0]
-            return min(1.0, 0.7 + (0.1 * efficiency) + budget_bonus + time_bonus)
+            # Correct culprit -> returns a positive score between [0.7, 0.95]
+            return min(0.95, 0.7 + (0.1 * efficiency) + budget_bonus + time_bonus)
         else:
-            # Wrong culprit
-            return -0.5
+            # Wrong culprit -> Return 0.05 instead of -0.5 to keep strictly > 0
+            return 0.05
 
     def _resolve_stochastic_clue(self, outcomes):
         r = random.random()
@@ -209,7 +209,10 @@ class CaseSolverEnvironment(Environment):
             return self._build_observation()
 
         reward = -0.01  # Small step penalty to encourage speed
-        info = {"action": action.action_type}
+        info = {
+            "action": action.action_type,
+            "score": 0.05 # Prevent null by defaulting to baseline non-zero score
+        }
         
         self._state["steps_taken"] += 1
         
@@ -318,11 +321,13 @@ class CaseSolverEnvironment(Environment):
             
             if len(self._state["discovered_clues"]) < 2:
                 reward -= 0.5 # Premature conclusion penalty
-                score = 0.0
+                score = 0.05 # Nudged from 0.0
             else:
                 score = self._grade_solution(target) 
                 reward += score
-            score = round(float(score), 2)
+            
+            # Ensure final score is strictly within (0, 1)
+            score = max(0.05, min(0.95, round(float(score), 2)))
             self._state["score"] = score
             # Handshaking the score logic properly as requested
             info["score"] = score 
