@@ -7,7 +7,7 @@ from openai import OpenAI
 from client import CaseSolverEnv
 from models import Action
 
-IMAGE_NAME = os.getenv("IMAGE_NAME", "case_solver_env:latest") 
+LOCAL_IMAGE_NAME = os.getenv("LOCAL_IMAGE_NAME") or os.getenv("IMAGE_NAME") or "case_solver_env:latest" 
 API_KEY = os.getenv("HF_TOKEN") or os.getenv("API_KEY")
 API_BASE_URL = os.getenv("API_BASE_URL") or "https://router.huggingface.co/v1"
 MODEL_NAME = os.getenv("MODEL_NAME") or "Qwen/Qwen2.5-72B-Instruct"
@@ -44,9 +44,11 @@ def log_step(step: int, action: str, reward: float, done: bool, error: Optional[
 
 
 # FIXED: Added 'task' parameter and formatting to meet Meta's mandatory requirements
-def log_end(task: str, success: bool, steps: int, score: float, rewards: List[float]) -> None:
+# Change Line 47-49 to this:
+def log_end(success: bool, steps: int, score: float, rewards: List[float]) -> None:
     rewards_str = ",".join(f"{r:.2f}" for r in rewards)
-    print(f"[END] task={task} success={str(success).lower()} steps={steps} score={score:.3f} rewards={rewards_str}", flush=True)
+    # Removed task=... and changed score to .2f
+    print(f"[END] success={str(success).lower()} steps={steps} score={score:.2f} rewards={rewards_str}", flush=True)
 
 
 def build_user_prompt(step: int, obs, last_reward: float, history: List[str]) -> str:
@@ -151,14 +153,14 @@ async def run_episode(env: CaseSolverEnv, client: OpenAI, case_idx: int):
         print(f"[DEBUG] Error during episode: {e}", flush=True)
     finally:
         # FIXED: Passing task_id here for mandatory logging
-        log_end(task=task_id, success=success, steps=steps_taken, score=score, rewards=rewards)
+        log_end(success=success, steps=steps_taken, score=score, rewards=rewards)
 
 
 async def main() -> None:
     client = OpenAI(base_url=API_BASE_URL, api_key=API_KEY)
 
     try:
-        env = await CaseSolverEnv.from_docker_image(IMAGE_NAME)
+        env = await CaseSolverEnv.from_docker_image(LOCAL_IMAGE_NAME)
         try:
             for case_idx in range(3):
                 await run_episode(env, client, case_idx)
