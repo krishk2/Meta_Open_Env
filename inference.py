@@ -146,7 +146,7 @@ async def run_episode(env: CaseSolverEnv, client: OpenAI, case_idx: int):
                     score = float(obs.score)
                 break
 
-        score = min(max(score, 0.0), 1.0)  # clamp to [0, 1]
+        score = min(max(score, 0.01), 0.99)  # strictly within (0, 1)
         success = score >= SUCCESS_SCORE_THRESHOLD
 
     except Exception as e:
